@@ -1,0 +1,430 @@
+/* ============================================================
+   GIBE DigiCard — foglio di stile del template
+   Un solo file, nessuna dipendenza.
+
+   Le variabili in :root sono l'unica cosa che cambia da cliente
+   a cliente, e in pratica è una sola: --h, la tinta dell'accento.
+   Il fondo ardesia #0f172a resta fisso per tutti.
+   ============================================================ */
+
+/* --- Token: fallback esadecimale per browser senza OKLCH ---- */
+:root {
+  /* --h e' la tinta del marchio del cliente e governa SOLO l'accento.
+     Le superfici NON ruotano piu' con lei: il fondo #0f172a e' la casa
+     GIBE, uguale per tutti, e regge qualsiasi tinta gli si metta sopra.
+     Ruotando --h cambia il cliente, non il prodotto. */
+  --h: 232;
+
+  /* --bg e' l'alto della sfumatura, cioe' il colore scelto; --bg-deep
+     e' dove sprofonda in basso. Il vetro si legge per differenza: su
+     un fondo piatto il pannello non avrebbe niente da cui staccarsi. */
+  --bg:          #0f172a;
+  --bg-deep:     #050916;
+  /* Vetro fume', non bianco: sopra una foto chiara un vetro chiaro
+     lascerebbe le etichette illeggibili. Scuro funziona sempre. */
+  --panel:       rgba(15, 23, 42, 0.55);
+  --panel-solid: #1f2a3d;
+  --line:        rgba(226, 236, 255, 0.13);
+  --line-soft:   rgba(226, 236, 255, 0.07);
+  --text:        #f1f5fa;
+  --muted:       #a1acc0;
+  --accent:      #59c8fd;
+  --accent-soft: rgba(89, 200, 253, 0.16);
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+
+  --pad:  14px;
+  --gap:  10px;
+  --r-lg: 22px;
+  --r-md: 16px;
+  --r-sm: 12px;
+
+  --hero-max: clamp(200px, 44svh, 330px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Browser moderni: stessa palette in OKLCH. Le superfici sono una scala
+   di ardesia ancorata a #0f172a (tinta 266, croma bassissima); l'accento
+   e' l'unica cosa che segue --h. Il round-trip OKLCH -> sRGB di
+   oklch(0.208 0.040 266) restituisce #0f172a esatto, quindi fallback e
+   versione moderna mostrano lo stesso fondo. */
+@supports (color: oklch(0.5 0.1 40)) {
+  :root {
+    --bg:          oklch(0.208 0.040 266);
+    --bg-deep:     oklch(0.140 0.032 266);
+    --panel:       oklch(0.208 0.040 266 / 0.55);
+    --panel-solid: oklch(0.283 0.038 262);
+    --line:        oklch(0.99 0.010 262 / 0.13);
+    --line-soft:   oklch(0.99 0.010 262 / 0.07);
+    --text:        oklch(0.968 0.008 262);
+    --muted:       oklch(0.742 0.031 262);
+    --accent:      oklch(0.790 0.125 var(--h));
+    --accent-soft: oklch(0.790 0.125 var(--h) / 0.16);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  font-family: var(--font);
+  color: var(--text);
+  /* L'alto, non il fondo: cosi' il rimbalzo dell'overscroll in cima e
+     la barra URL di Safari restano esattamente il colore dichiarato in
+     theme-color, senza giunta visibile. */
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* La sfumatura del fondo. Ancorata al viewport, non alla pagina: un
+   cliente con un bottone e uno con cinque devono vedere lo stesso
+   fondo, e la pagina non e' lunga uguale per tutti.
+
+   Tiene #0f172a fino al 26%, cioè fin sopra il pannello di vetro, poi
+   sprofonda. La rampa cade quindi proprio dietro il pannello, ed è
+   quello che gli dà il bordo: il vetro appare più chiaro in basso, dove
+   ha sotto il buio, e si stacca invece di stare appoggiato al nulla. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg,
+    var(--bg) 0%,
+    var(--bg) 26%,
+    var(--bg-deep) 100%);
+  z-index: -2;
+}
+
+/* Grana finissima: rompe il banding della sfumatura su schermi OLED.
+   Serve piu' di prima, perche' ora la rampa e' lunga un viewport
+   intero e sta tutta nella gamma scura, dove i salti si vedono. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   HERO — slider 4:3, la prima slide è il logo
+   ============================================================ */
+
+.hero { padding-top: 0; }
+
+.hero__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.hero__track::-webkit-scrollbar { display: none; }
+
+/* A tutta larghezza, bordo a bordo, senza angoli stondati: la foto
+   e' la testata della card. L'invito a scorrere lo fanno i pallini,
+   che stanno sempre in vista sotto la foto. */
+.hero__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  max-height: var(--hero-max);
+  overflow: hidden;
+  position: relative;
+  background: var(--panel-solid);
+}
+
+.hero__slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Nessun velo sulla foto: sporcherebbe le copertine chiare.
+   Lo stacco dal pannello lo dà già il vetro fumé che gli sale sopra. */
+
+.hero__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 0 0;
+  min-height: 18px;
+}
+
+.hero__dot {
+  width: 6px; height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--line);
+  transition: width 0.4s var(--ease), background-color 0.4s var(--ease);
+}
+.hero__dot[aria-current="true"] {
+  width: 20px;
+  background: var(--accent);
+}
+
+/* ============================================================
+   PANNELLO AZIONI — l'unico vetro della pagina
+   Sta sotto i pallini, non sopra la foto: se la copre, i
+   pallini finiscono sotto il pannello e non si toccano piu'.
+   ============================================================ */
+
+.actions {
+  position: relative;
+  margin: 14px var(--pad) 0;
+  padding: 16px 12px 14px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 20px 50px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* Dove la sfocatura non esiste il vetro diventa una superficie
+   piena: mai testo su fondo semitrasparente illeggibile. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .actions { background: var(--panel-solid); }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid + .grid {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 2px 9px;
+  min-height: 48px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.35s var(--ease), background-color 0.35s var(--ease);
+}
+
+.tile__ico {
+  display: grid;
+  place-items: center;
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  transition: border-color 0.35s var(--ease), background-color 0.35s var(--ease);
+}
+.tile__ico svg { width: 21px; height: 21px; }
+
+/* Riga contatto: leggermente più accesa della riga social,
+   così la gerarchia si legge senza doverla spiegare. */
+.grid--primary .tile__ico {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.tile__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+  color: var(--muted);
+  text-align: center;
+}
+
+.tile:active { transform: scale(0.94); }
+.tile:active .tile__ico { border-color: var(--accent); }
+
+@media (hover: hover) {
+  .tile:hover .tile__ico { border-color: var(--accent); }
+  .tile:hover .tile__label { color: var(--text); }
+}
+
+/* ============================================================
+   SOTTO LA PIEGA
+   Fondo piatto: qui il vetro sarebbe finto, quindi superfici piene.
+   ============================================================ */
+
+.below { padding: 18px var(--pad) 0; }
+
+.stack {
+  display: grid;
+  gap: var(--gap);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.btn svg { width: 20px; height: 20px; color: var(--accent); flex: none; }
+.btn__chev {
+  margin-left: auto;
+  color: var(--muted);
+  opacity: 0.55;
+}
+.btn__chev svg { width: 18px; height: 18px; color: inherit; }
+.btn:active { transform: scale(0.985); border-color: var(--accent); }
+
+/* Elenco secondario: forma diversa dai bottoni principali,
+   così si legge subito che conta meno. */
+.list {
+  margin: 18px 0 0;
+  padding: 0 4px;
+  list-style: none;
+  border-top: 1px solid var(--line-soft);
+}
+.list__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 4px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.list__row svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+
+/* Condividi e' un <button>, non un link: stesso aspetto delle righe. */
+button.list__row {
+  width: 100%;
+  margin: 0;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: var(--line-soft);
+  background: none;
+  font-family: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+button.list__row svg { color: var(--accent); }
+.list__row .btn__chev svg { width: 16px; height: 16px; }
+
+.info {
+  margin: 22px 2px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.info p { margin: 0 0 8px; max-width: 62ch; }
+.info strong { color: var(--text); font-weight: 600; }
+
+.credits {
+  margin: 26px 0 0;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  /* Discreti ma non illeggibili. Sull'ardesia servono 0.75: a 0.62,
+     valore della palette ambra, il contrasto effettivo crollava a
+     3.75:1, sotto la soglia AA. Misurato, non stimato. */
+  opacity: 0.75;
+}
+.credits a { color: inherit; text-decoration: none; }
+
+/* ============================================================
+   CONDIVIDI — avviso "Link copiato" quando manca il pannello nativo
+   ============================================================ */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 11;
+  padding: 10px 18px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.toast[data-show="true"] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ============================================================
+   Accessibilità e schermi grandi
+   ============================================================ */
+
+:where(a, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Resta una card da telefono anche su desktop: incorniciata,
+   non stiracchiata a tutta larghezza. */
+@media (min-width: 520px) {
+  body {
+    max-width: 460px;
+    margin-inline: auto;
+    border-inline: 1px solid var(--line-soft);
+  }
+}
